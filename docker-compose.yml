@@ -1,3 +1,4 @@
+
 services:
   user_server:
     build:
@@ -16,18 +17,21 @@ services:
       - "dapr.io/app-id=user-server"
       - "dapr.io/app-port=3001"
 
-  dapr_user:
-    image: daprio/daprd:latest
-    command: ["./daprd", "--app-id", "user-server", "--app-port", "3001", "--dapr-http-port", "3500"]
+  client:
+    build:
+      context: ./client
+    ports:
+      - "80:80"
     networks:
       - app-network
+    depends_on:
+      - user_server
     labels:
-      - "dapr.io/enabled=true"
-      - "dapr.io/role=sidecar"
+      - "dapr.io/enabled=false"
 
   mongo:
     image: mongo:latest
-    restart: always  # יבטיח שהשירות יופעל מחדש אם הוא קורס
+    restart: always  
     command: mongod --bind_ip_all
     volumes:
       - mongo-data:/data/db
