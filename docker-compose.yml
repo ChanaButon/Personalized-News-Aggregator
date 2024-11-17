@@ -1,0 +1,47 @@
+services:
+  user_server:
+    build:
+      context: ./services/user_server
+    ports:
+      - "3001:3001"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/personalized-news-aggregator
+      - PORT=3001
+    depends_on:
+      - mongo  # Only depends on MongoDB
+    networks:
+      - app-network
+    labels:
+      - "dapr.io/enabled=true"
+      - "dapr.io/app-id=user-server"
+      - "dapr.io/app-port=3001"
+
+  dapr_user:
+    image: daprio/daprd:latest
+    command: ["./daprd", "--app-id", "user-server", "--app-port", "3001", "--dapr-http-port", "3500"]
+    networks:
+      - app-network
+    labels:
+      - "dapr.io/enabled=true"
+      - "dapr.io/role=sidecar"
+
+  mongo:
+    image: mongo:latest
+    restart: always  # יבטיח שהשירות יופעל מחדש אם הוא קורס
+    command: mongod --bind_ip_all
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+    labels:
+      - "dapr.io/enabled=false"
+    ports:
+      - "27017:27017"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local
