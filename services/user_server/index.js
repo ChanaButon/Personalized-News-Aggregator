@@ -2,37 +2,32 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
 const User = require('./userModel'); // Import the user model
 require('dotenv').config(); // Load environment variables
 
 const app = express();
-
 app.use(cors());
-app.use(bodyParser.json()); // For parsing application/json
+app.use(bodyParser.json()); // Parse JSON payloads
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 })
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
 /**
- * Endpoint: Register a new user
+ * Register a new user
  */
 app.post('/register', async (req, res) => {
   const { name, email, password, preferences } = req.body;
   try {
-    // Hash the password before saving
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = new User({
       name,
       email,
-      password: hashedPassword,
-      preferences: preferences || { news: [], technology: [] }, // Default preferences if not provided
+      password,
+      preferences: preferences || { news: [], technology: [] }
     });
 
     await newUser.save();
@@ -47,19 +42,13 @@ app.post('/register', async (req, res) => {
 });
 
 /**
- * Endpoint: Login a user
+ * Login a user
  */
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).send({ message: 'Invalid email or password' });
-    }
-
-    // Compare the provided password with the hashed password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    if (!user || user.password !== password) {
       return res.status(401).send({ message: 'Invalid email or password' });
     }
 
@@ -72,7 +61,7 @@ app.post('/login', async (req, res) => {
 });
 
 /**
- * Endpoint: Get preferences of a user
+ * Get preferences of a user
  */
 app.get('/preferences', async (req, res) => {
   const { userId } = req.query;
@@ -89,7 +78,7 @@ app.get('/preferences', async (req, res) => {
 });
 
 /**
- * Endpoint: Update preferences of a user
+ * Update preferences of a user
  */
 app.put('/preferences', async (req, res) => {
   const { userId, preferences } = req.body;
@@ -109,7 +98,7 @@ app.put('/preferences', async (req, res) => {
 });
 
 /**
- * Endpoint: Get user email by userId
+ * Get user email by userId
  */
 app.get('/user/email', async (req, res) => {
   const { userId } = req.query;

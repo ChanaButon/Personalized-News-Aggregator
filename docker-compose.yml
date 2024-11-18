@@ -4,7 +4,7 @@ services:
     build:
       context: ./services/news-aggregation_server
     ports:
-      - "3000:3000"
+      - "3002:3002"
     env_file:
       - ./services/news-aggregation_server/.env
     depends_on:
@@ -14,7 +14,7 @@ services:
     labels:
       - "dapr.io/enabled=true"
       - "dapr.io/app-id=news-server"
-      - "dapr.io/app-port=3000"
+      - "dapr.io/app-port=3002"
     
   user_server:
     build:
