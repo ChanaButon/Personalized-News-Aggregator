@@ -1,48 +1,79 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const cors = require('cors');
+const bcrypt = require('bcrypt');
 const User = require('./userModel'); // Import the user model
 require('dotenv').config(); // Load environment variables
 
 const app = express();
+
+app.use(cors());
 app.use(bodyParser.json()); // For parsing application/json
-console.log(process.env.MONGO_URI);
+
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 5000, // מקסימום זמן המתנה לחיבור
-  socketTimeoutMS: 45000, // זמן מקסימלי לפעולת socket
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
 })
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// Endpoint to register new user
+/**
+ * Endpoint: Register a new user
+ */
 app.post('/register', async (req, res) => {
   const { name, email, password, preferences } = req.body;
   try {
-    const newUser = new User({ name, email, password, preferences });
+    // Hash the password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      preferences: preferences || { news: [], technology: [] }, // Default preferences if not provided
+    });
+
     await newUser.save();
-    console.log(newUser);
-    res.status(201).send(newUser);
+    res.status(201).send({ message: 'User registered successfully', user: newUser });
   } catch (error) {
-    res.status(500).send('Error registering user: ' + error.message);
+    if (error.code === 11000) { // Handle duplicate email error
+      res.status(400).send({ message: 'Email already exists' });
+    } else {
+      res.status(500).send({ message: 'Error registering user', error: error.message });
+    }
   }
 });
 
-// Endpoint to login user
+/**
+ * Endpoint: Login a user
+ */
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email, password });
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).send('Invalid credentials');
+      return res.status(401).send({ message: 'Invalid email or password' });
     }
-    res.send(user);
+
+    // Compare the provided password with the hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send({ message: 'Invalid email or password' });
+    }
+
+    // Exclude the password from the response
+    const { password: _, ...userData } = user.toObject();
+    res.send({ message: 'Login successful', user: userData });
   } catch (error) {
-    res.status(500).send('Error logging in: ' + error.message);
+    res.status(500).send({ message: 'Error logging in', error: error.message });
   }
 });
 
-// Endpoint to get preferences of a user
+/**
+ * Endpoint: Get preferences of a user
+ */
 app.get('/preferences', async (req, res) => {
   const { userId } = req.query;
   try {
@@ -50,25 +81,36 @@ app.get('/preferences', async (req, res) => {
     if (user) {
       res.send(user.preferences);
     } else {
-      res.status(404).send('User not found');
+      res.status(404).send({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).send('Error fetching preferences: ' + error.message);
+    res.status(500).send({ message: 'Error fetching preferences', error: error.message });
   }
 });
 
-// Endpoint to update preferences of a user
+/**
+ * Endpoint: Update preferences of a user
+ */
 app.put('/preferences', async (req, res) => {
   const { userId, preferences } = req.body;
   try {
-    const updatedUser = await User.findByIdAndUpdate(userId, { preferences }, { new: true });
-    res.send(updatedUser.preferences);
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { preferences },
+      { new: true } // Return the updated document
+    );
+    if (!updatedUser) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+    res.send({ message: 'Preferences updated successfully', preferences: updatedUser.preferences });
   } catch (error) {
-    res.status(500).send('Error updating preferences: ' + error.message);
+    res.status(500).send({ message: 'Error updating preferences', error: error.message });
   }
 });
 
-// Endpoint to get user email by userId
+/**
+ * Endpoint: Get user email by userId
+ */
 app.get('/user/email', async (req, res) => {
   const { userId } = req.query;
   try {
@@ -76,10 +118,10 @@ app.get('/user/email', async (req, res) => {
     if (user) {
       res.json({ email: user.email });
     } else {
-      res.status(404).send('User not found');
+      res.status(404).send({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).send('Error fetching user email: ' + error.message);
+    res.status(500).send({ message: 'Error fetching user email', error: error.message });
   }
 });
 

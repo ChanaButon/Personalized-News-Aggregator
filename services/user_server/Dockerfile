@@ -2,11 +2,11 @@
 FROM node:16
 
 # Set the working directory in the container
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Copy package.json and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install && npm cache clean --force
 
 # Copy all source files into the container
 COPY . .
@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 3001
 
 # Start the application
-CMD ["node", "index.js"]
+CMD ["npm", "start"]

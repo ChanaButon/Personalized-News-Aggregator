@@ -1,15 +1,30 @@
 
 services:
+  news-aggregation_server:
+    build:
+      context: ./services/news-aggregation_server
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./services/news-aggregation_server/.env
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+    labels:
+      - "dapr.io/enabled=true"
+      - "dapr.io/app-id=news-server"
+      - "dapr.io/app-port=3000"
+    
   user_server:
     build:
       context: ./services/user_server
     ports:
       - "3001:3001"
-    environment:
-      - MONGO_URI=mongodb://mongo:27017/personalized-news-aggregator
-      - PORT=3001
+    env_file:
+      - ./services/user_server/.env
     depends_on:
-      - mongo  # Only depends on MongoDB
+      - mongo
     networks:
       - app-network
     labels:
@@ -21,7 +36,7 @@ services:
     build:
       context: ./client
     ports:
-      - "80:80"
+      - "3000:80"
     networks:
       - app-network
     depends_on:
@@ -49,3 +64,8 @@ networks:
 volumes:
   mongo-data:
     driver: local
+
+# Reference to the environment file for all services
+#env_file:
+ 
+ # - .env  # הגדרת קובץ env כללי
