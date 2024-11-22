@@ -8,14 +8,18 @@ const app = express();
 app.use(bodyParser.json());
 
 const daprPort = process.env.DAPR_HTTP_PORT || 3503; // Dapr port for pub/sub
+const daprPubSubName = "news-pubsub"; // Pub/Sub component name defined in Dapr
+const topicName = "news-topic"; // Topic for publishing news articles
+
 const daprPortUser = process.env.DAPR_HTTP_PORT_USER || 3500;
-const userServiceAppId = 'user-service';
+const userServiceAppId = 'user_server';
+
 const daprPortNotification = process.env.DAPR_HTTP_PORT_NOTIFICATION || 3502;
 const notificationServiceAppId = 'notification-service';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Endpoint to fetch news and send email to user
+// Endpoint to fetch news, summarize, and publish to RabbitMQ
 app.get('/process-news', async (req, res) => {
     const userId = req.query.userId;
 
@@ -32,49 +36,36 @@ app.get('/process-news', async (req, res) => {
         const userPreferences = await getUserPreferences(userId);
         console.log('User preferences fetched:', userPreferences);
 
-        // Fetch user email
-        console.log('Fetching user email...');
-        const userEmail = await getUserEmail(userId);
-        console.log('User email fetched:', userEmail);
-
         // Fetch news articles based on user preferences
         console.log('Fetching news articles...');
         const newsArticles = await fetchNewsArticles(userPreferences);
         console.log(`Fetched ${newsArticles.length} news articles`);
 
-        // AI summarized news
+        // Summarize news articles using AI
         console.log('Generating summaries for news articles...');
         const summarizedNews = await generateSummaries(newsArticles);
         console.log('Summarized news generated:', summarizedNews);
 
-        // Send email to user
-        console.log('Sending email...');
-        await sendEmail(userEmail, summarizedNews);
-        console.log('Email request published successfully:', { email: userEmail, newsCount: summarizedNews.length });
+        // Publish summarized news to RabbitMQ via Dapr
+        console.log('Publishing summarized news to RabbitMQ...');
+        await publishNews(summarizedNews);
+        console.log('Summarized news published successfully to RabbitMQ');
 
-        res.status(200).send('News processed and email sent successfully');
+        res.status(200).send('News processed and published successfully');
     } catch (error) {
-        console.error('Error processing news and sending email:', error.message);
-        res.status(500).send('Error processing news and sending email');
+        console.error('Error processing news:', error.message);
+        res.status(500).send('Error processing news');
     }
 });
 
-// Function to send email of the news to the user
-async function sendEmail(email, news) {
+// Publish summarized news to RabbitMQ via Dapr
+async function publishNews(news) {
     try {
-        console.log('Sending email with news data:', { email, news });
-        const response = await axios.post(`http://notification-service-dapr:${daprPortNotification}/v1.0/invoke/${notificationServiceAppId}/method/send-email`, {
-            email,
-            news
-        });
-        console.log('Email sent successfully');
-        return response.data;
+        const publishUrl = `http://localhost:${daprPort}/v1.0/publish/${daprPubSubName}/${topicName}`;
+        const response = await axios.post(publishUrl, { news });
+        console.log('Published news to RabbitMQ via Dapr:', response.data);
     } catch (error) {
-        if (error.response) {
-            console.error('Error sending email:', error.response.status, error.response.data);
-        } else {
-            console.error('Error sending email:', error.message);
-        }
+        console.error('Error publishing news to RabbitMQ:', error.message);
         throw error;
     }
 }
@@ -100,7 +91,7 @@ async function fetchNewsArticles(preferences) {
 async function getUserPreferences(userId) {
     try {
         console.log(`Fetching preferences for userId: ${userId}`);
-        const response = await axios.get(`http://user-service-dapr:${daprPortUser}/v1.0/invoke/${userServiceAppId}/method/preferences`, {
+        const response = await axios.get(`http://localhost:${daprPortUser}/v1.0/invoke/${userServiceAppId}/method/preferences`, {
             params: { userId }
         });
         console.log('User preferences response:', response.data);
@@ -111,26 +102,7 @@ async function getUserPreferences(userId) {
     }
 }
 
-// Fetch user email using Dapr service invocation
-async function getUserEmail(userId) {
-    try {
-        console.log(`Fetching email for userId: ${userId}`);
-        const response = await axios.get(`http://user-service-dapr:${daprPortUser}/v1.0/invoke/${userServiceAppId}/method/user/email/`, {
-            params: { userId }
-        });
-        console.log('User email response:', response.data);
-        return response.data.email;
-    } catch (error) {
-        if (error.response) {
-            console.error('Error fetching user email:', error.response.status, error.response.data);
-        } else {
-            console.error('Error fetching user email:', error.message);
-        }
-        throw error;
-    }
-}
-
-// Function to generate AI summaries
+// Generate AI summaries for news articles
 async function generateSummaries(news) {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
@@ -154,6 +126,23 @@ async function generateSummaries(news) {
     console.log('All summaries generated successfully');
     return summarizedNews;
 }
+
+app.post('/test-ai', async (req, res) => {
+    const prompt = req.body.prompt;
+    if (!prompt) {
+        console.error('Missing prompt in request body');
+        return res.status(400).send({ error: 'Prompt is required' });
+    }
+
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const result = await model.generateContent(prompt);
+        res.status(200).send(result.response.text());
+    } catch (error) {
+        console.error('Error in /test-ai endpoint:', error.message);
+        res.status(500).send({ error: error.message });
+    }
+});
 
 // Start the server
 const port = process.env.PORT || 3002;
