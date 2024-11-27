@@ -1,4 +1,5 @@
 
+
 services:
   # News Aggregation Service
   news-aggregation_server:
@@ -11,13 +12,38 @@ services:
     depends_on:
       - mongo
       - rabbitmq
+      - redis  # Add Redis as a dependency here
+      - user-dapr
     networks:
       - app-network
     labels:
       - "dapr.io/enabled=true"
       - "dapr.io/app-id=news-aggregation_server"
       - "dapr.io/app-port=3002"
-  
+    volumes:
+      - ./dapr/components:/components  # Ensure pubsub.yaml is in this folder
+
+  # Dapr for News Aggregation Service
+  news-aggregation-dapr:
+    image: daprio/daprd:edge
+    command: [
+      "./daprd",
+      "-app-id", "news-aggregation_server",
+      "-app-port", "3002",
+      "-dapr-http-port", "3503",
+      "--log-level", "debug"
+    ]
+    environment:
+      - DAPR_COMPONENTS_PATH=/components
+    depends_on:
+      - news-aggregation_server
+    networks:
+      - app-network
+    volumes:
+      - ./dapr:/components  # Ensure Dapr can access pubsub.yaml
+    ports:
+      - "3503:3503" 
+
   # User Service
   user_server:
     build:
@@ -29,12 +55,36 @@ services:
     depends_on:
       - mongo
       - rabbitmq
+      - redis  # Add Redis as a dependency here
     networks:
       - app-network
     labels:
       - "dapr.io/enabled=true"
       - "dapr.io/app-id=user_server"
       - "dapr.io/app-port=3001"
+    volumes:
+      - ./dapr/components:/components  # Ensure pubsub.yaml is in this folder
+
+  # Dapr for User Service
+  user-dapr:
+    image: daprio/daprd:edge
+    command: [
+      "./daprd",
+      "-app-id", "user_server",
+      "-app-port", "3001",
+      "-dapr-http-port", "3505",
+      "--log-level", "debug"
+    ]
+    environment:
+      - DAPR_COMPONENTS_PATH=/components
+    depends_on:
+      - user_server
+    networks:
+      - app-network
+    volumes:
+      - ./dapr:/components  # Ensure Dapr can access pubsub.yaml
+    ports:
+      - "3505:3505" 
 
   # Client (Frontend)
   client:
@@ -47,7 +97,7 @@ services:
     depends_on:
       - user_server
     labels:
-      - "dapr.io/enabled=false"
+      - "dapr.io/enabled=true"
 
   # MongoDB Database
   mongo:
@@ -78,10 +128,23 @@ services:
     labels:
       - "dapr.io/enabled=false"
 
+  # Redis (In-memory Data Store)
+  redis:
+    image: redis:6
+    container_name: redis
+    ports:
+      - "6379:6379"  # Default Redis port
+    networks:
+      - app-network
+    volumes:
+      - redis-data:/data  # Persistent data storage
+
 networks:
   app-network:
     driver: bridge
 
 volumes:
   mongo-data:
+    driver: local
+  redis-data:
     driver: local

@@ -11,7 +11,7 @@ const daprPort = process.env.DAPR_HTTP_PORT || 3503; // Dapr port for pub/sub
 const daprPubSubName = "news-pubsub"; // Pub/Sub component name defined in Dapr
 const topicName = "news-topic"; // Topic for publishing news articles
 
-const daprPortUser = process.env.DAPR_HTTP_PORT_USER || 3500;
+const daprPortUser = process.env.DAPR_HTTP_PORT_USER || 3505;
 const userServiceAppId = 'user_server';
 
 const daprPortNotification = process.env.DAPR_HTTP_PORT_NOTIFICATION || 3502;
@@ -91,9 +91,8 @@ async function fetchNewsArticles(preferences) {
 async function getUserPreferences(userId) {
     try {
         console.log(`Fetching preferences for userId: ${userId}`);
-        const response = await axios.get(`http://localhost:${daprPortUser}/v1.0/invoke/${userServiceAppId}/method/preferences`, {
-            params: { userId }
-        });
+        const response = await axios.get(`http://user_server:3001/preferences`, { params: { userId } });
+
         console.log('User preferences response:', response.data);
         return response.data;
     } catch (error) {

@@ -1,127 +1,80 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const RegisterPage = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    preferences: { news: [], technology: [] },
-  });
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [preferencesNews, setPreferencesNews] = useState('');
+  const [preferencesTech, setPreferencesTech] = useState('');
+ // const [role, setRole] = useState('user');  // ברירת מחדל היא 'user'
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handlePreferencesChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      preferences: {
-        ...formData.preferences,
-        [name]: [...formData.preferences[name], value],
-      },
-    });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
+
+    // ממיר את רשימות ההעדפות למערכים
+    const preferences = {
+      news: preferencesNews.split(',').map(item => item.trim()), // פיצול לפי פסיקים
+      technology: preferencesTech.split(',').map(item => item.trim()), // פיצול לפי פסיקים
+    };
 
     try {
-      const response = await axios.post("http://localhost:3001/register", formData);
-      alert("User registered successfully!");
-      console.log(response.data);
-      setFormData({
-        name: "",
-        email: "",
-        password: "",
-        preferences: { news: [], technology: [] },
+      const response = await axios.post('http://localhost:3001/register', {
+        name,
+        email,
+        password,
+        preferences
       });
-    } catch (error) {
-      console.error("Error registering user:", error.message);
-      setError(error.response?.data?.message || "An error occurred during registration.");
-    } finally {
-      setIsLoading(false);
+
+      localStorage.setItem('user', JSON.stringify(response.data.user)); // Store user info
+      navigate('/news'); // Redirect to news page
+    } catch (err) {
+      setError('Registration failed. Please try again.');
     }
   };
 
   return (
-    <div>
+    <div className="register">
       <h2>Register</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleRegister}>
         <input
-          name="name"
-          placeholder="Name"
-          value={formData.name}
-          onChange={handleChange}
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Enter your name"
           required
         />
         <input
           type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Enter your email"
           required
         />
         <input
           type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter your password"
           required
         />
-        <div>
-          <h4>Preferences</h4>
-          <label>
-            <input
-              type="checkbox"
-              name="news"
-              value="Technology"
-              onChange={handlePreferencesChange}
-            />
-            Technology News
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="news"
-              value="Sports"
-              onChange={handlePreferencesChange}
-            />
-            Sports News
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="technology"
-              value="AI"
-              onChange={handlePreferencesChange}
-            />
-            AI Topics
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="technology"
-              value="Web Development"
-              onChange={handlePreferencesChange}
-            />
-            Web Development
-          </label>
-        </div>
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? "Registering..." : "Register"}
-        </button>
+        <textarea
+          value={preferencesNews}
+          onChange={(e) => setPreferencesNews(e.target.value)}
+          placeholder="Enter your news preferences (comma separated)"
+        />
+        <textarea
+          value={preferencesTech}
+          onChange={(e) => setPreferencesTech(e.target.value)}
+          placeholder="Enter your technology preferences (comma separated)"
+        />
+
+        {error && <p className="error">{error}</p>}
+        <button type="submit" className="btn btn-primary">Register</button>
       </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   );
 };

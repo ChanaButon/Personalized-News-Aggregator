@@ -152,9 +152,39 @@ app.get('/user/email', async (req, res) => {
   }
 });
 
+// Update user details (name, email, password, preferences)
+app.put('/update-user', async (req, res) => {
+  const { userId } = req.query;
+  const { name, email, password, preferences } = req.body;
+  
+  try {
+    // Update user information
+    const updatedUser = await User.findByIdAndUpdate(
+      userId, 
+      { name, email, password, preferences },
+      { new: true } // Return the updated document
+    );
+    console.log(updatedUser)
+
+
+
+    if (!updatedUser) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    // Publish an event for updating user details
+    publishEvent("user.updated", { userId: updatedUser._id, name: updatedUser.name, email: updatedUser.email });
+
+    res.send({ message: 'User information updated successfully', user: updatedUser });
+  } catch (error) {
+    res.status(500).send({ message: 'Error updating user information', error: error.message });
+  }
+});
+
+
 // Start the server
 const port = process.env.PORT || 3001;
-app.listen(port, async () => {
+app.listen(port,'0.0.0.0', async () => {
   console.log(`User Service listening on port ${port}`);
   await connectRabbitMQ(); // Connect to RabbitMQ when the server starts
 });

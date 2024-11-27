@@ -1,0 +1,33 @@
+/* כפתור 3 פסים */
+.hamburger-menu {
+  font-size: 30px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+}
+
+/* טופס עריכה */
+form input, form textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+form button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+}
+
+form button:hover {
+  background-color: #45a049;
+}
+
+/* הודעת שגיאה */
+.error {
+  color: red;
+  font-size: 14px;
+}

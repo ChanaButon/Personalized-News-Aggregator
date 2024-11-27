@@ -8,16 +8,14 @@ spec:
   version: v1
   metadata:
   - name: host
-    value: "amqp://rabbitmq:5672" # RabbitMQ host and port
+    value: "amqp://user:password@rabbitmq:5672/" # RabbitMQ host and port
   - name: consumerID
     value: "news-aggregator-service" # Unique consumer ID for your service
+  - name: consumerID
+    value: "user_server"
   - name: durable
     value: "true" # Messages persist until processed
   - name: deletedWhenUnused
     value: "false" # Do not delete the queue when unused
   - name: prefetchCount
     value: "50" # Number of unacknowledged messages allowed at a time
-auth:
-  secretStore: kubernetes
-
-
