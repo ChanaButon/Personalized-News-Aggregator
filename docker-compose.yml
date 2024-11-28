@@ -1,4 +1,4 @@
-
+version: '3.8'
 
 services:
   # News Aggregation Service
@@ -12,8 +12,8 @@ services:
     depends_on:
       - mongo
       - rabbitmq
-      - redis  # Add Redis as a dependency here
-      - user-dapr
+      - redis
+      - user_server
     networks:
       - app-network
     labels:
@@ -21,28 +21,25 @@ services:
       - "dapr.io/app-id=news-aggregation_server"
       - "dapr.io/app-port=3002"
     volumes:
-      - ./dapr/components:/components  # Ensure pubsub.yaml is in this folder
+      - ./dapr/components:/components
 
-  # Dapr for News Aggregation Service
   news-aggregation-dapr:
     image: daprio/daprd:edge
     command: [
       "./daprd",
       "-app-id", "news-aggregation_server",
       "-app-port", "3002",
-      "-dapr-http-port", "3503",
+      "-dapr-http-port", "3501",
+      "-placement-host-address", "dapr_placement:50005",
       "--log-level", "debug"
     ]
     environment:
       - DAPR_COMPONENTS_PATH=/components
     depends_on:
       - news-aggregation_server
-    networks:
-      - app-network
     volumes:
-      - ./dapr:/components  # Ensure Dapr can access pubsub.yaml
-    ports:
-      - "3503:3503" 
+      - ./dapr:/components
+    network_mode: "service:news-aggregation_server"
 
   # User Service
   user_server:
@@ -55,7 +52,7 @@ services:
     depends_on:
       - mongo
       - rabbitmq
-      - redis  # Add Redis as a dependency here
+      - redis
     networks:
       - app-network
     labels:
@@ -63,28 +60,38 @@ services:
       - "dapr.io/app-id=user_server"
       - "dapr.io/app-port=3001"
     volumes:
-      - ./dapr/components:/components  # Ensure pubsub.yaml is in this folder
+      - ./dapr/components:/components
 
-  # Dapr for User Service
   user-dapr:
     image: daprio/daprd:edge
     command: [
       "./daprd",
       "-app-id", "user_server",
       "-app-port", "3001",
-      "-dapr-http-port", "3505",
+      "-dapr-http-port", "3500",
+      "-placement-host-address", "dapr_placement:50005",
       "--log-level", "debug"
     ]
     environment:
       - DAPR_COMPONENTS_PATH=/components
     depends_on:
       - user_server
+    volumes:
+      - ./dapr:/components
+    network_mode: "service:user_server"
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./services/notification-service
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./services/notification-service/.env
+    depends_on:
+      - redis
     networks:
       - app-network
-    volumes:
-      - ./dapr:/components  # Ensure Dapr can access pubsub.yaml
-    ports:
-      - "3505:3505" 
 
   # Client (Frontend)
   client:
@@ -99,10 +106,18 @@ services:
     labels:
       - "dapr.io/enabled=true"
 
+  # Dapr Placement Service
+  dapr_placement:
+    image: "daprio/dapr:latest"
+    container_name: dapr_placement
+    command: [ "./placement", "-port", "50005" ]
+    ports:
+      - "50005:50005"
+
   # MongoDB Database
   mongo:
     image: mongo:latest
-    restart: always  
+    restart: always
     command: mongod --bind_ip_all
     volumes:
       - mongo-data:/data/db
@@ -133,11 +148,11 @@ services:
     image: redis:6
     container_name: redis
     ports:
-      - "6379:6379"  # Default Redis port
+      - "6379:6379"
     networks:
       - app-network
     volumes:
-      - redis-data:/data  # Persistent data storage
+      - redis-data:/data
 
 networks:
   app-network:

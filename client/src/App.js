@@ -6,6 +6,7 @@ import UserProfile from '../src/components/UserProfile';
 import HomePage from '../src/components/HomePage';
 import NewsPage from '../src/components/NewsPage';
 import ErrorBoundary from './ErrorBoundary'; // Import the Error Boundary
+import SendUpdatesPage from '../src/components/SendUpdatesPage'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={<UserProfile />} />
         <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/send-updates" element={<SendUpdatesPage />} />
         <Route
           path="/news"
           element={

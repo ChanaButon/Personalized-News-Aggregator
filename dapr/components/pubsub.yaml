@@ -11,8 +11,6 @@ spec:
     value: "amqp://user:password@rabbitmq:5672/" # RabbitMQ host and port
   - name: consumerID
     value: "news-aggregator-service" # Unique consumer ID for your service
-  - name: consumerID
-    value: "user_server"
   - name: durable
     value: "true" # Messages persist until processed
   - name: deletedWhenUnused
