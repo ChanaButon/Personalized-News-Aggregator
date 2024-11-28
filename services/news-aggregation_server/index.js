@@ -75,11 +75,15 @@ async function fetchNewsArticles(preferences) {
     const apiKey = process.env.NEWS_API_KEY;
     const query = preferences.join(',');
     const apiUrl = `https://newsdata.io/api/1/latest?apikey=${apiKey}&q=${query}`;
+   
+
 
     console.log('Fetching news from API with query:', query);
     try {
         const response = await axios.get(apiUrl);
         console.log('News data fetched from API:', response.data.results);
+        console.log('News API Response:', response.data);
+
         return response.data.results;
     } catch (error) {
         console.error('Error fetching news:', error.message);
@@ -91,7 +95,7 @@ async function fetchNewsArticles(preferences) {
 async function getUserPreferences(userId) {
     try {
         console.log(`Fetching preferences for userId: ${userId}`);
-        const response = await axios.get(`http://user_server:3001/preferences`, { params: { userId } });
+        const response = await axios.get(`http://localhost:3505/v1.0/invoke/user_server/method/preferences`, { params: { userId } });
 
         console.log('User preferences response:', response.data);
         return response.data;

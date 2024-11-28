@@ -112,7 +112,7 @@ app.put('/preferences', async (req, res) => {
     // Publish a preferences updated event
     publishEvent("user.preferences_updated", { userId: updatedUser._id, preferences });
 
-    res.send({ message: 'Preferences updated successfully', preferences: updatedUser.preferences });
+    res.send({ message: 'Preferences updated successfully', user: updatedUser });
   } catch (error) {
     res.status(500).send({ message: 'Error updating preferences', error: error.message });
   }
@@ -152,34 +152,7 @@ app.get('/user/email', async (req, res) => {
   }
 });
 
-// Update user details (name, email, password, preferences)
-app.put('/update-user', async (req, res) => {
-  const { userId } = req.query;
-  const { name, email, password, preferences } = req.body;
-  
-  try {
-    // Update user information
-    const updatedUser = await User.findByIdAndUpdate(
-      userId, 
-      { name, email, password, preferences },
-      { new: true } // Return the updated document
-    );
-    console.log(updatedUser)
 
-
-
-    if (!updatedUser) {
-      return res.status(404).send({ message: 'User not found' });
-    }
-
-    // Publish an event for updating user details
-    publishEvent("user.updated", { userId: updatedUser._id, name: updatedUser.name, email: updatedUser.email });
-
-    res.send({ message: 'User information updated successfully', user: updatedUser });
-  } catch (error) {
-    res.status(500).send({ message: 'Error updating user information', error: error.message });
-  }
-});
 
 
 // Start the server
