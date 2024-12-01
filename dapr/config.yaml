@@ -1,7 +1,8 @@
 apiVersion: dapr.io/v1alpha1
 kind: Configuration
 metadata:
-  name: daprConfig
+  name: appconfig
 spec:
-  tracing:
-    samplingRate: "0"
+  features:
+  - name: HotReloading
+    enabled: true

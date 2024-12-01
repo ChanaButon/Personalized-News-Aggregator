@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # News Aggregation Service
@@ -30,6 +29,7 @@ services:
       "-app-id", "news-aggregation_server",
       "-app-port", "3002",
       "-dapr-http-port", "3501",
+
       "-placement-host-address", "dapr_placement:50005",
       "--log-level", "debug"
     ]
@@ -39,7 +39,10 @@ services:
       - news-aggregation_server
     volumes:
       - ./dapr:/components
-    network_mode: "service:news-aggregation_server"
+      - ./dapr/components:/components
+    # network_mode: "service:news-aggregation_server"
+    ports:
+      - "3501:3501"
 
   # User Service
   user_server:
@@ -78,8 +81,12 @@ services:
       - user_server
     volumes:
       - ./dapr:/components
-    network_mode: "service:user_server"
+      - ./dapr/components:/components
+    ports:
+      - "3500:3500"
 
+  # network_mode: "service:user_server"
+    
   # Notification Service
   notification-service:
     build:

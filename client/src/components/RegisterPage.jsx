@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import '../css/RegisterPage.css'
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -8,17 +9,16 @@ const RegisterPage = () => {
   const [password, setPassword] = useState('');
   const [preferencesNews, setPreferencesNews] = useState('');
   const [preferencesTech, setPreferencesTech] = useState('');
- // const [role, setRole] = useState('user');  // ברירת מחדל היא 'user'
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    // ממיר את רשימות ההעדפות למערכים
+    // Convert preferences into arrays
     const preferences = {
-      news: preferencesNews.split(',').map(item => item.trim()), // פיצול לפי פסיקים
-      technology: preferencesTech.split(',').map(item => item.trim()), // פיצול לפי פסיקים
+      news: preferencesNews.split(',').map(item => item.trim()), // Split by commas
+      technology: preferencesTech.split(',').map(item => item.trim()), // Split by commas
     };
 
     try {
@@ -37,15 +37,16 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="register">
-      <h2>Register</h2>
-      <form onSubmit={handleRegister}>
+    <div className="register-container">
+      <h2 className="register-title">Register</h2>
+      <form onSubmit={handleRegister} className="register-form">
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter your name"
           required
+          className="register-input name-input"
         />
         <input
           type="email"
@@ -53,6 +54,7 @@ const RegisterPage = () => {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your email"
           required
+          className="register-input email-input"
         />
         <input
           type="password"
@@ -60,20 +62,23 @@ const RegisterPage = () => {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
           required
+          className="register-input password-input"
         />
         <textarea
           value={preferencesNews}
           onChange={(e) => setPreferencesNews(e.target.value)}
           placeholder="Enter your news preferences (comma separated)"
+          className="preferences-input news-input"
         />
         <textarea
           value={preferencesTech}
           onChange={(e) => setPreferencesTech(e.target.value)}
           placeholder="Enter your technology preferences (comma separated)"
+          className="preferences-input tech-input"
         />
 
-        {error && <p className="error">{error}</p>}
-        <button type="submit" className="btn btn-primary">Register</button>
+        {error && <p className="error-message">{error}</p>}
+        <button type="submit" className="register-button">Register</button>
       </form>
     </div>
   );

@@ -1,114 +1,153 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import  '../css/UserProfile.css';
-
+import '../css/styles.css'
 
 const NewsPage = () => {
-  const [news, setNews] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [preferences, setPreferences] = useState('');
-  const [error, setError] = useState('');
-  const user = JSON.parse(localStorage.getItem('user'));
-  console.log(user); // לראות אם המידע תקין
+  const [newsArticles, setNewsArticles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [userData, setUserData] = useState(null);
+  const [currentPreferences, setCurrentPreferences] = useState({
+    news: [],
+    technology: []
+  });
+  const [updatedPreferences, setUpdatedPreferences] = useState({
+    news: [],
+    technology: []
+  });
 
-
-  // Fetching news based on user's preferences
   useEffect(() => {
-    const fetchNews = async () => {
+    // Retrieve user data from localStorage
+    const userFromStorage = JSON.parse(localStorage.getItem('user'));
+    console.log('User data:', userFromStorage);
+
+    if (!userFromStorage) {
+      setErrorMessage('User not logged in');
+      setIsLoading(false);
+      return;
+    }
+
+    setUserData(userFromStorage);
+    setCurrentPreferences(userFromStorage.preferences);
+
+    async function fetchNewsArticles() {
       try {
-        const response = await axios.get(`http://localhost:3002/process-news?userId=${user._id}`);
-        setNews(response.data);
+        console.log('Fetching news for user:', userFromStorage._id);
+        // Fetch news based on user preferences
+        const response = await axios.get(`http://localhost:3002/process-news?userId=${userFromStorage._id}`);
+        console.log('News fetched:', response.data);
+        if (response.data.news) {
+          setNewsArticles(response.data.news);
+        } else {
+          setErrorMessage('No news available.');
+        }
       } catch (err) {
         console.error('Error fetching news:', err);
+        setErrorMessage('Error fetching news');
+      } finally {
+        setIsLoading(false);
       }
-    };
-
-    if (user) {
-      setName(user.name);
-      setEmail(user.email);
-      setPreferences(user.preferences ? user.preferences.join(', ') : '');
-      fetchNews();
     }
-  }, [user]);
 
-  // Toggle edit mode
-  const handleEditToggle = () => {
-    setIsEditing(!isEditing);
+    fetchNewsArticles();
+  }, []);
+
+  const handlePreferenceChange = (category, event) => {
+    setUpdatedPreferences({
+      ...updatedPreferences,
+      [category]: event.target.value.split(',').map(item => item.trim())
+    });
   };
 
-  // Handle updating user info
-  const handleUpdate = async (e) => {
-    e.preventDefault();
+  const handlePreferencesUpdate = async () => {
     try {
-      const response = await axios.put(`http://localhost:3001/update-user/${user._id}`, {
-        name, email, password, preferences: preferences.split(',').map((pref) => pref.trim())
+      console.log('Updating preferences for user:', userData._id);
+      const response = await axios.put('http://localhost:3001/preferences', {
+        userId: userData._id,
+        preferences: updatedPreferences
       });
-      localStorage.setItem('user', JSON.stringify(response.data.user)); // Update user info in localStorage
-      setIsEditing(false); // Close edit form
+
+      console.log('Response from update:', response.data);
+      if (response.data.message === 'Preferences updated successfully') {
+        setCurrentPreferences(updatedPreferences); // Update the preferences in the state
+        alert('Preferences updated successfully');
+        console.log(userData.email,Object.values(updatedPreferences).flat())
+
+        // Send email notification
+        try {
+          await axios.post('http://localhost:3003/send-updates', {
+            userEmail: userData.email,
+            preferences: Object.values(updatedPreferences).flat() 
+            // Flatten preferences into a single array
+            
+          });
+          console.log('Email sent successfully.');
+        } catch (emailError) {
+          console.error('Error sending email:', emailError);
+          alert('Preferences updated but failed to send email notification.');
+        }
+      } else {
+        setErrorMessage('Error updating preferences');
+      }
     } catch (err) {
-      setError('Failed to update user information');
+      console.error('Error updating preferences:', err);
+      setErrorMessage('Error updating preferences');
     }
   };
+
+  if (isLoading) return <p>Loading...</p>;
+  if (errorMessage) return <p>{errorMessage}</p>;
 
   return (
-    <div className="news-page">
-      <h2>News</h2>
-      
-      {/* Hamburger Button */}
-      <button className="hamburger-menu" onClick={handleEditToggle}>
-        &#9776; {/* 3 horizontal bars (hamburger icon) */}
-      </button>
-
-      {/* Display news */}
-      {news.length === 0 ? (
-        <p>Loading news...</p>
+    <div>
+      <h1>Latest News</h1>
+      {newsArticles.length === 0 ? (
+        <p>No news available.</p>
       ) : (
-        <ul>
-          {news.map((article, index) => (
-            <li key={index}>
-              <h3>{article.title}</h3>
-              <p>{article.summary}</p>
-            </li>
-          ))}
-        </ul>
+        newsArticles.map((article, index) => (
+          <div key={index} className="news-article">
+            <h2>{article.title}</h2>
+            <p>{article.summary}</p>
+            <a href={article.link} target="_blank" rel="noopener noreferrer">Read More</a>
+          </div>
+        ))
       )}
 
-      {/* Edit form */}
-      {isEditing && (
-        <form onSubmit={handleUpdate}>
-          <h3>Edit Your Profile</h3>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter new name"
-            required
-          />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter new email"
-            required
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter new password"
-            required
-          />
-          <textarea
-            value={preferences}
-            onChange={(e) => setPreferences(e.target.value)}
-            placeholder="Enter new preferences (comma separated)"
-          />
-          {error && <p className="error">{error}</p>}
-          <button type="submit" className="btn btn-primary">Update</button>
-        </form>
+      {userData && (
+        <div className="user-info">
+          <h2>User Information</h2>
+          <p><strong>Name:</strong> {userData.name}</p>
+          <p><strong>Email:</strong> {userData.email}</p>
+          <p><strong>Role:</strong> {userData.role}</p>
+
+          <h3>Current Preferences</h3>
+          <p><strong>News Categories:</strong> {currentPreferences.news.join(', ')}</p>
+          <p><strong>Technology Topics:</strong> {currentPreferences.technology.join(', ')}</p>
+
+          <h3>Update Preferences</h3>
+          <div>
+            <label>
+              News Categories (comma separated):
+              <input
+                type="text"
+                value={updatedPreferences.news.join(', ')}
+                onChange={(e) => handlePreferenceChange('news', e)}
+              />
+            </label>
+          </div>
+          <div>
+            <label>
+              Technology Topics (comma separated):
+              <input
+                type="text"
+                value={updatedPreferences.technology.join(', ')}
+                onChange={(e) => handlePreferenceChange('technology', e)}
+              />
+            </label>
+          </div>
+
+          <button onClick={handlePreferencesUpdate}>Update Preferences</button>
+        </div>
       )}
     </div>
   );

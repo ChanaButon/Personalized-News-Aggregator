@@ -1,6 +1,6 @@
-// HomePage.js
 import React from 'react';
 import { Link } from 'react-router-dom';
+import '../css/HomePage.css';
 
 function HomePage() {
   return (
@@ -9,7 +9,6 @@ function HomePage() {
       <div className="button-group">
         <Link to="/login" className="btn primary">Login</Link>
         <Link to="/register" className="btn secondary">Register</Link>
-        <Link to="/send-updates" className="btn tertiary">Send Updates</Link>
       </div>
     </div>
   );

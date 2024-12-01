@@ -2,9 +2,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const cors = require('cors'); // הוספת חבילה של CORS
 require('dotenv').config();
 
 const app = express();
+
+// הגדרת ה-CORS עבור כל הבקשות
+app.use(cors()); // מאפשר את CORS עבור כל המקורות, אפשר גם להגבילו למקורות ספציפיים כמו React
+
 app.use(bodyParser.json());
 
 const daprPort = process.env.DAPR_HTTP_PORT || 3501; // Dapr port for pub/sub
@@ -31,27 +36,30 @@ app.get('/process-news', async (req, res) => {
     console.log(`Processing news for userId: ${userId}`);
 
     try {
-        // Fetch user preferences
-        console.log('Fetching user preferences...');
-        const userPreferences = await getUserPreferences(userId);
-        console.log('User preferences fetched:', userPreferences);
+        // Fetch user preferences (this part is commented out for now)
+        // console.log('Fetching user preferences...');
+        // const userPreferences = await getUserPreferences(userId);
+        // console.log('User preferences fetched:', userPreferences);
 
-        // Fetch news articles based on user preferences
+        // Fetch news articles based on sport preference (default to 'sport')
         console.log('Fetching news articles...');
-        const newsArticles = await fetchNewsArticles(userPreferences);
+        const newsArticles = await fetchNewsArticles(['sport']);
         console.log(`Fetched ${newsArticles.length} news articles`);
 
-        // Summarize news articles using AI
-        console.log('Generating summaries for news articles...');
-        const summarizedNews = await generateSummaries(newsArticles);
-        console.log('Summarized news generated:', summarizedNews);
+        // Summarize news articles using AI (this part is commented out for now)
+        // console.log('Generating summaries for news articles...');
+        // const summarizedNews = await generateSummaries(newsArticles);
+        // console.log('Summarized news generated:', summarizedNews);
 
-        // Publish summarized news to RabbitMQ via Dapr
-        console.log('Publishing summarized news to RabbitMQ...');
-        await publishNews(summarizedNews);
-        console.log('Summarized news published successfully to RabbitMQ');
+        // Publish summarized news to RabbitMQ via Dapr (this part is commented out for now)
+        // console.log('Publishing summarized news to RabbitMQ...');
+        // await publishNews(summarizedNews);
+        // console.log('Summarized news published successfully to RabbitMQ');
 
-        res.status(200).send('News processed and published successfully');
+        res.status(200).send({
+            message: 'News processed and published successfully',
+            news: newsArticles
+          });
     } catch (error) {
         console.error('Error processing news:', error.message);
         res.status(500).send('Error processing news');
@@ -75,15 +83,11 @@ async function fetchNewsArticles(preferences) {
     const apiKey = process.env.NEWS_API_KEY;
     const query = preferences.join(',');
     const apiUrl = `https://newsdata.io/api/1/latest?apikey=${apiKey}&q=${query}`;
-   
 
-
-    console.log('Fetching news from API with query:', query);
+    console.log('Fetching news from API with query:', query); // Add a log to check if the request is sent correctly
     try {
         const response = await axios.get(apiUrl);
-        console.log('News data fetched from API:', response.data.results);
-        console.log('News API Response:', response.data);
-
+        console.log('API Response:', response.data); // Log the full API response
         return response.data.results;
     } catch (error) {
         console.error('Error fetching news:', error.message);
@@ -91,7 +95,7 @@ async function fetchNewsArticles(preferences) {
     }
 }
 
-// Fetch user preferences using Dapr service invocation
+// Fetch user preferences using Dapr service invocation (this part is commented out for now)
 async function getUserPreferences(userId) {
     try {
         console.log(`Fetching preferences for userId: ${userId}`);
@@ -105,7 +109,7 @@ async function getUserPreferences(userId) {
     }
 }
 
-// Generate AI summaries for news articles
+// Generate AI summaries for news articles (this part is commented out for now)
 async function generateSummaries(news) {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
@@ -130,6 +134,7 @@ async function generateSummaries(news) {
     return summarizedNews;
 }
 
+// Test AI endpoint (for future use)
 app.post('/test-ai', async (req, res) => {
     const prompt = req.body.prompt;
     if (!prompt) {

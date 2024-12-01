@@ -1,16 +1,18 @@
 // התקנת ספריות נדרשות
-// npm install express nodemailer axios body-parser dotenv
+// npm install express nodemailer axios body-parser dotenv cors
 
 const express = require('express');
 const nodemailer = require('nodemailer');
 const axios = require('axios');
 const bodyParser = require('body-parser');
+const cors = require('cors'); // ייבוא חבילת CORS
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3003;
 
 app.use(bodyParser.json());
+app.use(cors()); // מאפשר CORS עבור כל הדומיינים
 
 // מגדיר את הטרנספורטר של Nodemailer
 const transporter = nodemailer.createTransport({
