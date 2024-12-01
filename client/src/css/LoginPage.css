@@ -7,8 +7,13 @@
 
 body {
   font-family: 'Arial', sans-serif;
-  background-color: #f9f9f9;
+  background-color: #f0f4f8;
   color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
 }
 
 /* Login Container */
@@ -17,20 +22,24 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
   padding: 20px;
-  background-color: #fff;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  max-width: 450px;
-  margin: auto;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
 }
 
 .login-title {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: bold;
-  color: #444;
+  color: #222;
   margin-bottom: 20px;
+  text-align: center;
+  border-bottom: 2px solid #0056b3;
+  padding-bottom: 10px;
+  width: 100%;
 }
 
 .login-form {
@@ -41,40 +50,35 @@ body {
 }
 
 .login-input {
-  padding: 12px;
+  padding: 14px;
   font-size: 16px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 8px;
   width: 100%;
-  transition: border-color 0.3s;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .login-input:focus {
   border-color: #0056b3;
+  box-shadow: 0 0 5px rgba(0, 86, 179, 0.3);
   outline: none;
-}
-
-.email-input {
-  background-color: #f9f9f9;
-}
-
-.password-input {
-  background-color: #f9f9f9;
 }
 
 .login-button {
   padding: 14px;
   font-size: 16px;
   background-color: #0056b3;
-  color: white;
+  color: #ffffff;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 .login-button:hover {
   background-color: #004494;
+  transform: scale(1.02);
 }
 
 .error-message {
@@ -102,15 +106,15 @@ body {
 @media (max-width: 768px) {
   .login-container {
     padding: 15px;
-    max-width: 400px;
+    max-width: 90%;
+  }
+
+  .login-title {
+    font-size: 22px;
   }
 
   .login-input,
   .login-button {
     font-size: 14px;
-  }
-
-  .login-title {
-    font-size: 20px;
   }
 }

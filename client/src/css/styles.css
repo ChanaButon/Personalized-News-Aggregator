@@ -1,135 +1,70 @@
-/* Reset some default styles for better cross-browser consistency */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Arial', sans-serif;
-  background-color: #f4f7fc;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  color: #333;
-}
-
-/* Container for the entire NewsPage */
 .news-page {
-  width: 80%;
-  max-width: 1200px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  padding: 30px;
-  overflow: hidden;
-}
-
-/* Header with user greeting */
-.header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.header h1 {
-  color: #007BFF;
-  font-size: 36px;
-}
-
-/* User info section */
-.user-info {
-  background-color: #f0f4f8;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-}
-
-.user-info h2 {
-  color: #007BFF;
-  font-size: 28px;
-  margin-bottom: 15px;
-}
-
-.user-info p {
-  font-size: 16px;
-  margin: 10px 0;
-}
-
-/* News articles container */
-.news-articles {
-  margin-top: 30px;
+  font-family: Arial, sans-serif;
+  margin: 20px;
 }
 
 .news-article {
-  background-color: #e8f1ff;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  transition: transform 0.3s;
-}
-
-.news-article:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 5px;
+  background-color: #f9f9f9;
 }
 
 .news-article h2 {
-  color: #0056b3;
-  font-size: 24px;
-  margin-bottom: 10px;
+  margin: 0 0 10px 0;
 }
 
-.news-article p {
-  font-size: 16px;
-  margin-bottom: 10px;
-}
-
-.news-article a {
-  color: #0056b3;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.news-article a:hover {
-  text-decoration: underline;
-}
-
-/* Preferences update section */
-.preferences-update {
-  margin-top: 30px;
-  background-color: #f0f4f8;
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.preferences-update label {
-  display: block;
-  font-size: 16px;
-  margin-bottom: 10px;
-}
-
-.preferences-update input {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  margin-bottom: 20px;
-  border: 1px solid #007BFF;
-  border-radius: 8px;
-  background-color: #f9fbfd;
-}
-
-.preferences-update button {
-  width: 100%;
-  padding: 15px;
-  font-size: 18px;
-  color: white;
+.sidebar-toggle {
+  margin-top: 20px;
+  padding: 10px 20px;
   background-color: #007BFF;
+  color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 5px;
   cursor: pointer;
 }
 
-.preferences-update button:hover {
+.sidebar-toggle:hover {
   background-color: #0056b3;
+}
+
+.sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 300px;
+  height: 100%;
+  background-color: #f4f4f4;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.sidebar h2 {
+  margin-top: 0;
+}
+
+.sidebar label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.sidebar input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+}
+
+.sidebar button {
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.sidebar button:hover {
+  background-color: #218838;
 }

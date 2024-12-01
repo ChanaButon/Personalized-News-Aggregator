@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import '../css/styles.css'
+import '../css/styles.css';
 
 const NewsPage = () => {
   const [newsArticles, setNewsArticles] = useState([]);
@@ -9,15 +9,15 @@ const NewsPage = () => {
   const [userData, setUserData] = useState(null);
   const [currentPreferences, setCurrentPreferences] = useState({
     news: [],
-    technology: []
+    technology: [],
   });
   const [updatedPreferences, setUpdatedPreferences] = useState({
     news: [],
-    technology: []
+    technology: [],
   });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Handle sidebar state
 
   useEffect(() => {
-    // Retrieve user data from localStorage
     const userFromStorage = JSON.parse(localStorage.getItem('user'));
     console.log('User data:', userFromStorage);
 
@@ -33,7 +33,6 @@ const NewsPage = () => {
     async function fetchNewsArticles() {
       try {
         console.log('Fetching news for user:', userFromStorage._id);
-        // Fetch news based on user preferences
         const response = await axios.get(`http://localhost:3002/process-news?userId=${userFromStorage._id}`);
         console.log('News fetched:', response.data);
         if (response.data.news) {
@@ -55,7 +54,7 @@ const NewsPage = () => {
   const handlePreferenceChange = (category, event) => {
     setUpdatedPreferences({
       ...updatedPreferences,
-      [category]: event.target.value.split(',').map(item => item.trim())
+      [category]: event.target.value.split(',').map(item => item.trim()),
     });
   };
 
@@ -64,22 +63,18 @@ const NewsPage = () => {
       console.log('Updating preferences for user:', userData._id);
       const response = await axios.put('http://localhost:3001/preferences', {
         userId: userData._id,
-        preferences: updatedPreferences
+        preferences: updatedPreferences,
       });
 
-      console.log('Response from update:', response.data);
       if (response.data.message === 'Preferences updated successfully') {
-        setCurrentPreferences(updatedPreferences); // Update the preferences in the state
+        setCurrentPreferences(updatedPreferences);
         alert('Preferences updated successfully');
-        console.log(userData.email,Object.values(updatedPreferences).flat())
 
         // Send email notification
         try {
           await axios.post('http://localhost:3003/send-updates', {
             userEmail: userData.email,
-            preferences: Object.values(updatedPreferences).flat() 
-            // Flatten preferences into a single array
-            
+            preferences: Object.values(updatedPreferences).flat(),
           });
           console.log('Email sent successfully.');
         } catch (emailError) {
@@ -99,7 +94,7 @@ const NewsPage = () => {
   if (errorMessage) return <p>{errorMessage}</p>;
 
   return (
-    <div>
+    <div className="news-page">
       <h1>Latest News</h1>
       {newsArticles.length === 0 ? (
         <p>No news available.</p>
@@ -113,8 +108,12 @@ const NewsPage = () => {
         ))
       )}
 
-      {userData && (
-        <div className="user-info">
+      <button className="sidebar-toggle" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+        {isSidebarOpen ? 'Close User Info' : 'Open User Info'}
+      </button>
+
+      {isSidebarOpen && userData && (
+        <div className="sidebar">
           <h2>User Information</h2>
           <p><strong>Name:</strong> {userData.name}</p>
           <p><strong>Email:</strong> {userData.email}</p>
@@ -145,7 +144,6 @@ const NewsPage = () => {
               />
             </label>
           </div>
-
           <button onClick={handlePreferencesUpdate}>Update Preferences</button>
         </div>
       )}
